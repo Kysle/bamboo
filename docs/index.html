@@ -1,3 +1,757 @@
-<html>
-boo
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Bamboo Temps</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+#privacy {
+	font-size: small;
+	position:relative;
+	top:5em;	
+}
+#emailTD {
+	background-color:lightblue;	
+	padding-left:.5em;
+	padding-right:.2em;
+	text-align:center;
+}
+
+.impList {
+	width: 100%;
+	height:100%;
+	clear:both;	
+	text-align:center;
+
+	overflow-x: hidden;
+	overflow-y: auto;
+	margin:auto;
+}
+.imp {
+	display:inline-block;
+	padding:2px 10px 25px 10px;;
+	height:12pt;
+	text-decoration:none;
+	color:black;
+	border: 1px solid black;
+	cursor: pointer;
+
+}
+
+.selectedImp {
+	background: lightblue; /* For browsers that do not support gradients */
+ 	 background: -webkit-linear-gradient(left, white 10% , lightblue 40%); /* For Safari 5.1 to 6.0 */
+  	background: -o-linear-gradient(right, white 10%, lightblue 40%); /* For Opera 11.1 to 12.0 */
+  	background: -moz-linear-gradient(right, white 10%, lightblue 40%); /* For Firefox 3.6 to 15 */
+  	background: linear-gradient(to right, white 10%, lightblue 40%); /* Standard syntax */
+	cursor: default !important;
+	border: 0px;
+	position: relative;
+	width:100%;
+	font-size: 13pt;
+}
+
+.impListLocation {
+	font-size:small;
+	display:block;
+}
+
+.impOffline {
+	font-style:italic;	
+}
+
+.impOnline {
+	font-style:normal;
+	font-variant: small-caps;	
+}
+
+
+
+#formUpdateLocation{
+	clear:both;
+	padding-top:2em;
+}
+
+#locationList {
+	max-height: 80%;
+	overflow: auto;
+	position: relative;
+	margin-top: -10em;
+}
+
+#locationList a {
+	display:block;
+	text-decoration: none;
+	color: #2c784b;
+	background-color: #f0ffe6;
+}
+
+#locationList a .selectedLocation {
+	background-color: #b4e6ad;
+	color: black;
+	cursor: default;
+	border-top: 2px solid white;
+	border-bottom: 2px solid white;
+	border-top-left-radius: 1em;
+}
+
+#plotlyDiv {
+	width: auto;
+	height: auto;
+	display:block;
+	clear:both;	
+}
+#plotlyFiles {
+
+}
+.filesFor {
+	display: none;
+	overflow: hidden;
+	white-space:nowrap;
+	position:relative;
+	max-width: 600px
+}
+
+.activeFilesFor {
+	display: inline-block !important;
+}
+.filesForMonth {
+	background-color: #f0ffe6;
+	cursor: pointer;
+	border: 1px solid black;
+	padding: 0px 3px 4px 3px;
+	width: 4.4em;
+	display: inline-block;
+	position:relative;
+	bottom: -.25em;
+}
+.selectedMonth {
+	background-color: #b4e6ad;
+	cursor: pointer;
+	left:2px;
+	right:2px;
+	bottom: 0em;
+	border-top:.3px solid green;
+}
+.spacer {
+	width: 600px;
+	display:inline-block;
+}
+
+#errorDiv {
+	background-color: red;
+	position:relative;
+	margin-top: 3px;
+	margin-bottom: 3px;
+	width: 100%;
+	height: 1.75em;
+	display:none;
+	color: white;
+}
+
+#closeErrorDiv {
+	color: white;
+	background-color:#900;
+	cursor: pointer;
+	padding: 3px;
+	width: 1em;;
+	height: 1em;
+	float:right;
+	margin:2px
+}
+
+#statusDiv {
+	background-color: lightgreen;
+	border-radius:3px;
+	line-height: 1.5em;
+	font-weight:bold;
+	display:block;
+}
+
+#.abnormalStatus {
+	background-color: red;
+	color: white;
+}
+
+.statusMsg {	
+}
+
+
+</style>
+</head>
+
+<body>
+<h1 align="center">Temperatuer Logging</h1>
+<table align="center" width="95%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+  	<td colspan="4" align="center">
+    <div id="statusDiv"><div class="statusMsg">All online imps are reporting that everything is OK.</div></div>
+    <div id="errorDiv"><div id="closeErrorDiv">X</div></div></td>
+  </tr>
+  <tr>
+    <td width="10%" valign="center" align="center">
+    <div id="locationList">
+    </div>
+    </td>
+    <td width="65%" align="center">
+    <div id="plotlyDiv">
+   		
+    </div>
+    <div id="plotlyFiles">
+    </div>
+    <form id="formUpdateLocation" name="Update Location" method="post" enctype="application/x-www-form-urlencoded">
+    <label for="impLocation">Change <span id="impIDforLocUpdate">this imp</span>'s location:</label>
+    <input type="text" name="updateLocationTo" id="updateLocationTo" />
+    <input type="submit" value="Update" />
+    </form>
+    </td>
+    <td width="10%">
+    	<div id="impList" class="impList"></div>
+    </td>
+    <td width="15%" id="emailTD">
+    <!--TODO color this bar to match the selected imp's color-->
+    <p>Sign up for email alerts! You should receive an email notifying you of your subscription. </p>
+      <form id="formAddEmail" name="Add Email" method="post" enctype="application/x-www-form-urlencoded">
+        <label for="emailToMod">Email:</label>
+        <input type="text" name="emailToMod" id="emailToMod" />
+        <label for="nameToMod">Name:</label>
+        <input name="nameToMod" type="text" id="nameToMod" size="8" />
+        <input type="submit" value="Add Email" />
+      </form>
+      <p>&nbsp;</p>
+      <p>If you no longer wish to receive email alerts, select your name from the following list. </p>
+      <form id="formRemoveEmail" action="" method="post" enctype="application/x-www-form-urlencoded">
+      <select name="Current Email Alert List" size="5" id="emailNames">
+      </select>
+      <input type="submit" value="Remove from list" />
+      </form>
+    <p>&nbsp;</p></td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="/privacy.html" id="privacy">Privacy Policy</a>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+
+<script language="JavaScript" type="text/javascript"><!--
+	//TODO:
+	//save in local storage which imp/location was last selected for page refresh
+	
+	var imps = {
+		imp001 : "", //14kF3UfevsBO
+		imp002 : "14kF3UfevsBO",
+		imp003 : "",
+	};
+	
+	var i;
+	var numImps = Object.keys(imps).length;
+	
+	function setUpPage() {
+		var $impA,c;
+		for (i=0;i<numImps;i++) {
+			var impKey = Object.keys(imps)[i];			
+			if (i==0) c = "imp"
+			else c = "imp";
+			
+			$impA = $("<a/>", {
+				id: impKey,
+				"class": c,
+				text: impKey,
+				click: function(e) {
+					e.preventDefault();
+					switchLocations($(this).contents()[1].innerHTML, $(this));
+				}
+			})
+			.appendTo("#impList");
+			$("<span/>", {
+				"class": "impListLocation impOffline",
+				text: "imp offline",
+			})
+			.appendTo($impA);
+		}
+		$("#impIDforLocUpdate").text($(".selectedImp").attr("id"));
+		$("formUpdateLocation").trigger("reset");
+		$("formAddEmail").trigger("reset");
+	}
+
+	function populateNames(names) {
+		var emailNames = $("#emailNames");
+		names.sort();
+		
+		for (i = 0; i < names.length; i++) {
+			emailNames.append("<option>"+names[i]+"</option>");
+		}
+	}
+	
+	function updateNames(response, status, jqXHR) {
+		console.log(response);
+		$("#formAddEmail").trigger("reset");
+		$("#emailNames").empty();
+		populateNames(response);
+	}
+	var v;
+	
+	function switchLocations(changeTo, via, init) {
+	//via is anchor tag
+		console.log("changing graph to: "+changeTo);
+		console.log(via);
+		v = via;
+	if (!init) {
+		//Do nothing if the clicked anchor is already selected
+		if(via.hasClass("selectedImp") || via.hasClass("selectedLocation")) return;
+		
+		//Do nothing if the clicked imp is offline
+		if(via.has("span .impOffline").length > 0) return;
+	}
+	//TODO if the location doesn't exist
+		var loc = $("#"+changeTo);
+		console.log(loc);
+		if (!loc) return
+		//create that location in the locations list (and reorder?)
+		//placeholder for plotley saying there's no data for that locaiton
+		
+		
+		//if the location already exists on the left side-bar
+		//show the plot for the selected location
+		$("#filesFor"+changeTo).toggleClass("activeFilesFor");
+		changeMonth("#"+$(".activeFilesFor span:nth-last-child(2)").attr("id"), 3);
+			//add a scrollbar if there's more than 3x the width of the div -- spacers are each 1x
+			var ratio = $("#filesFor"+changeTo).get(0).scrollWidth / $("#plotlyFiles").width();
+			console.log(ratio);
+			if (ratio > 3.01) {
+				$(div).css("overvlow-x", "auto");
+			}
+	
+	//update to the correct selectedLocation
+		if (init || via.has("location").length >0) {
+			if (!init) $(".selectedLocation").toggleClass("selectedLocation");
+			$("#"+changeTo).toggleClass("selectedLocation");
+		}
+		
+	
+	//update to the correct selectedimp, reset forms
+		if (!init && via.has("imp").length > 0) {
+			$(".selectedImp").toggleClass("selectedImp");
+			via.toggleClass("selectedImp");	
+			
+			var impNameStr = via.attr("id");
+			$("#impIDforLocUpdate").text(impNameStr);
+			$("#updateLocationTo").val('');
+			
+			$.ajax({
+				method:"POST",
+				url: "https://agent.electricimp.com/"+imps[$(".selectedImp").attr("id")],
+				data:"fetchNames",
+			})
+			.done(updateNames)
+			.fail(processAjaxError);
+		}
+	}
+	
+	function graph(fid, fileDate, cols, rangeInDays) {
+		if(!cols) {
+			$.ajax({
+				method: "POST",
+				url: "https://agent.electricimp.com/"+imps[$(".selectedImp").attr("id")],
+				data: "fetchDataForFID="+fid
+			})
+			.done(function(response) {
+				graph(fid, fileDate, response)
+			})
+			.fail(processAjaxError);
+		}
+		else {
+			console.log(cols);
+
+			//TODO process errors
+			var timesS = cols.time ? cols.time.data : console.log("Err");
+//			var timesS = [ "1496300401", "1496307601", "1496354401", "1496390401", "1496397601", "1496674801", "1496678401", "1496764801", "1496793601", "1496880001", "1496880426", "1496981651", "1497759251", "1497712451", "1497971651", "1498271651" ];
+//			var sensor1 = [];
+//			var sensor2 = [];
+			var timesMS = [];
+			timesS.forEach(function(time){
+				timesMS.push(Math.floor(time/3600)*3600000);
+			});
+			
+			var sensor1 = cols.sensor1 ? cols.sensor1.data : console.log("err"); 
+			var sensor2 = cols.sensor2 ? cols.sensor2.data : console.log("error");
+			
+			console.log(timesMS);
+			console.log(sensor1);
+			
+			var data = [
+				{
+					mode: 'lines+markers',
+					x: timesMS,
+					y: sensor1,
+					name: 'Sensor 1',
+					marker: {
+						symbol: "diamond",
+						color: "#00b217",
+						line: {
+							color: "#017711",
+						}
+					},
+				}, 
+				{
+					mode: "lines+markers",
+					x: timesMS,
+					y: sensor2,
+					name: 'Sensor 2',
+					marker: {
+						symbol: "diamond-open",
+						color: "#011DBC",
+						line: {
+							color: "#0023EA",
+						}
+					},
+				}
+			];
+			var selectorOptions = {
+				buttons: [
+					{
+						step: 'day',
+						stepmod: 'backward',
+						count: '7',
+						label: 'show 7 days'
+					},
+					{ step: 'all', label: 'entire month' }
+				]
+			}
+			var monthNames = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+			var graphTitle = monthNames[parseInt(fileDate.split("-")[1])-1] + ", "+fileDate.split("-")[0];
+			if (!rangeInDays) rangeInDays = 3;
+			var layout = {
+				xaxis: {
+					type: "date",
+					range: plotlyRange(timesS, rangeInDays),
+					rangeselector: selectorOptions,
+					rangeslider: {borderwidth:"1",}
+				},
+				yaxis: {
+					ticksuffix: "&deg;F",
+				},
+				dragmode: "pan",
+				title: graphTitle,
+				titlefont: {
+					size: "20",
+					family: "Arial",
+				},
+				shapes: [
+					{
+						type: 'line',
+						x0: timesMS[0],
+						x1: timesMS[timesMS.length-1],
+						y0: "44",
+						y1: "44",
+						line: {
+							dash: "10px",
+							width: ".5px",
+							color: "red",
+						}
+					}
+				],
+				legend: {
+					bgcolor: "#F5F5F5",
+					borderwidth: "1",
+					bordercolor: "#DDD"
+				},
+			}
+
+			Plotly.newPlot("plotlyDiv", data, layout, {displaylogo:false});
+		}
+		$("#plotlyDiv").attr("currentMonth", fileDate);
+	}
+	
+	function changeMonth(spanID, rangeInDays) {		
+		//select month
+		var oldSpan = $(".filesForMonth .selected");
+		if ($(".selectedMonth").length) oldSpan.toggleClass("selectedMonth");
+		$(spanID).toggleClass("selectedMonth");
+		
+		//scroll to month
+		var parentDiv = $(spanID).parent();
+		console.log(parentDiv);
+		console.log(parentDiv.scrollLeft());
+		parentDiv.scrollLeft(parentDiv.scrollLeft() - parentDiv.width() / 2 + $(spanID).position().left + $(spanID).width() / 2);
+		
+		//change graph
+		graph($(spanID).attr("fid"), spanID.split("Month")[1], null, rangeInDays);
+		
+		return
+		
+		
+		var currentMonthAndYear = $("#plotlyDiv").attr("currentMonth");
+		if (!currentMonthAndYear) return;
+		var currentMonthAndYearArr = currentMonthAndYear.split("-");
+		var currYear = parseInt(currentMonthAndYearArr[0]);
+		var currMonth = parseInt(currentMonthAndYearArr[1]);
+		var gotoYear, gotoMonth;
+		console.log(currYear);
+		console.log(currMonth);
+		if (currMonth == 0 && direction == -1) { gotoYear = currYear-1; gotoMonth = 12; }
+		else if (currMonth == 11 && direction == 1) { gotoYear = currYear+1; gotoMonth = 1; }
+		else { gotoYear = currYear; gotoMonth = currMonth+direction };
+		gotoMonth = ("0"+gotoMonth).slice(-2);
+		var gotoFname = gotoYear+"-"+gotoMonth;
+		
+		var fids = JSON.parse($(".selectedLocation").attr("fids"));
+		if (gotoFname in fids) graph(fids[gotoFname], gotoFname);
+		else {
+			console.log("No such file "+gotoYear+"-"+gotoMonth);
+			var monthNames = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+			alert("No data exists for "+monthNames[gotoMonth-1]+" of "+gotoYear+".");
+		}
+	}
+	
+	function plotlyRange(timesS, timePeriod) {
+		var startX, endX = "";
+		var sortedTimes = timesS.sort();
+		endX = sortedTimes[sortedTimes.length-1]*1000;
+		console.log(endX);
+		var startDate = new Date(endX);
+		startDate.setDate(startDate.getDate() - timePeriod); //start the range timePeriod prior
+		startDate.setHours(0);
+		startDate.setMinutes(0);
+		startDate.setSeconds(0);
+		console.log(startDate.getTime());
+		startX = startDate.getTime();
+		return [startX, endX]
+	}
+	
+	function labelImpLocation(impStr, impLocation) {
+		$("#"+impStr+" span").text(impLocation).addClass("impOnline").removeClass("impOffline");
+		//$("#"+imp+" .impListLocation").html(impLocation);
+	}
+	
+	function populatePlotlyLocations(filesByLocation) {
+		console.log(filesByLocation);
+		var locations = Object.keys(filesByLocation);
+		var l = locations.length;
+		var div, files, j, l2;
+		var spacer = "<span class='spacer'></span";
+		var monthNames = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+		
+		for (i=0;i<l;i++) {
+			$("<a/>", {
+				href: "",
+				text: locations[i],
+				id: locations[i],
+				"class" : "location",
+				"fids": JSON.stringify(filesByLocation[locations[i]]),
+				click: function(e) {
+					e.preventDefault();
+					switchLocations(e.target.innerHTML, $(this));
+				}
+			}).appendTo($("#locationList"));
+			div = $("<div/>", {
+				id: "filesFor"+locations[i],
+				"class": "filesFor",
+				html: spacer
+			});
+			files = Object.keys(filesByLocation[locations[i]]);
+			l2 = files.length;
+			for (j=0; j<l2; j++) {
+				fNameArray = files[j].split("-");
+				if (!fNameArray || fNameArray.length == 1) continue;
+				$("<span/>", {
+					html: monthNames[fNameArray[1]-1]+"<br />"+fNameArray[0],
+					"fid": filesByLocation[locations[i]][files[j]],
+					"class": "filesForMonth",
+					id: "filesForMonth"+files[j],
+					click: function(e) {
+						changeMonth("#filesForMonth"+files[j], 14);
+					}
+				}).appendTo(div);
+			}
+			$(spacer).appendTo(div);
+			div.appendTo($("#plotlyFiles"));
+		}
+	}
+	
+	function processAjaxError(jqXHR, status, errorThrown) {
+		console.log(jqXHR);
+		console.log(status);
+		console.log(errorThrown);
+		
+		var msg;
+		if(jqXHR.responseJSON) {
+			msg = JSON.parse(jqXHR.responseText);
+			if (msg.error.type == "User") {
+				alert(errorJSON.error.message);
+			}
+			else reportErrorToUser(msg.error.type + " : " + msg.error.message);
+		} else reportErrorToUser("HTTP error");
+		
+	}
+	
+	function reportErrorToUser(msg) {
+		//TODO
+		$("#errorDiv").text(msg).animate({
+			display: "inherit",
+		}, 1000);
+		console.log(msg);
+	}
+	
+	function closeErrorDiv() {
+		$("#errorDiv").animate({
+			display: "none",
+		}, 500);
+	}
+	
+	function collateStatuses(impID, location, status) {
+		if (status == "OK") return // do nothing if everything is OK
+
+		var statusDiv = $("#statusDiv");
+		//if we already have an abnormal status, add to it
+		if (statusDiv.hasClass("abnormalStatus") == false) statusDiv.toggleClass("abnormalStatus");
+		$("<div />", {
+			"class" : "statusMsg",
+			text: "imp"+impID+" at "+location+": "+status,
+		}).appendTo(statusDiv);
+	}
+	
+	function initCall(attempt) {
+		console.log("attempt "+attempt);
+		if(attempt == numImps) {
+			var msg = "All imps appear to be offline.";
+			console.log(msg);
+			reportErrorToUser(msg); 
+		} else if (imps[Object.keys(imps)[attempt]] == "") { //don't bother if the url is blank
+			initCall(attempt+1);
+		} else {
+			$.ajax({
+				method: "POST",
+				url: "https://agent.electricimp.com/"+imps[Object.keys(imps)[attempt]],
+				data: "initialPageLoad"
+			})
+			.done(function(response, status, jqXHR) {
+				
+				var impKey = Object.keys(imps)[attempt];
+				
+				$("#"+impKey).addClass("selectedImp");
+				
+				labelImpLocation(impKey, response.impLocation);
+				collateStatuses(response.impID, response.impLocation, response.impStatus);
+				initialPageLoad(response, status, jqXHR);
+			})
+			.fail(function(jqXHR, status, error) {
+				console.log(jqXHR.status);
+				if (jqXHR.status == 400 || jqXHR.status == 500) { processAjaxError(jqXHR, status, error) }
+				console.log(jqXHR);
+				initCall(attempt+1);
+			});
+		}
+	}
+	
+	function initialPageLoad(response, status, jqXHR) {
+		console.log(response);
+		
+		//populate the email subscription list
+		populateNames(response.nameList);
+		
+		//populate the plotly location list
+		populatePlotlyLocations(response.filesByLocation);
+		
+		//populate the current location of the imps
+		for(i=0; i<numImps;i++) {
+			//don't bother with blank urls or imps that already have locations
+			var impKey = Object.keys(imps)[i];
+			if (imps[impKey] == "" || $("#"+impKey+" .impOnline")) continue;
+			
+			$.ajax({
+				method:"POST",
+				url:"https://agent.electricimp.com/"+imps[impKey],
+				data: "locationAndStatusRequest"
+			})
+			.done(function(response) {
+				labelImpLocation(impKey, response.impLocation);
+				collateStatuses(response.impID, response.impLocation, response.impStatus);
+			})
+			.fail(processAjaxError);
+		}
+		
+		//Change the graph to the appropriate one
+		var currImpLoc = $(".selectedImp .impListLocation").text();
+		switchLocations(currImpLoc, $(".selectedImp"), true);
+	
+		
+	} //initialPageLoad
+	
+	$(document).ready(function(){
+		setUpPage();
+		initCall(0);
+//		graph(1,"2017-02", 1);	
+
+		//TODO timer to refresh page/data at expected update	
+	}); //end document.ready
+	
+	$("#closeErrorDiv").click(closeErrorDiv);
+	
+	$("#formAddEmail").submit(function(e) {
+		e.preventDefault();
+		if(!$(".selectedImp")) { alert("You must have an imp selected to be added to its mailing list.") }
+		if($.trim($("#emailToMod").val()).length > 0 && $.trim($("#nameToMod").val()).length > 0 ) {
+			$.ajax({
+				method:"POST", 
+				url:"https://agent.electricimp.com/"+imps[$(".selectedImp").attr("id")],
+				data:$("#formAddEmail").serialize(),
+			})
+			.done(updateNames)
+			.fail(processAjaxError);
+		} else {
+			 alert("You must fill out both form fields.");
+		}
+		
+	});
+	
+	$("#formRemoveEmail").submit(function(event) {
+		event.preventDefault();
+		var selected = $("#emailNames option:selected").text();
+		console.log("selected: "+selected);
+		if(selected) {
+			$.ajax({
+				method: "POST", 
+				url: "https://agent.electricimp.com/"+imps[$(".selectedImp").attr("id")],
+				data: "nameToRemove="+selected,
+			})
+			.done(updateNames)
+			.fail(processAjaxError);
+		} else {
+			 alert("You must select a name...");
+		}
+		
+	});
+	
+	$("#formUpdateLocation").submit(function(event) {
+		event.preventDefault();
+		var updatedLocation = $("#updateLocationTo").val();
+		console.log("Update Location To: "+updatedLocation);
+		if($.trim(updatedLocation).length > 0 ) {
+			$.ajax({
+				method: "POST", 
+				url: "https://agent.electricimp.com/"+imps[$(".selectedImp").attr("id")],
+				data: "updatedLocation="+updatedLocation,
+			})
+			.done(function() {
+				//TODO something more graceful
+				location.reload();
+			})
+			.fail(processAjaxError);
+		} else {
+			 alert("You must input a new location for the device.");
+		}
+		
+	});
+//-->
+</script>
+</body>
 </html>

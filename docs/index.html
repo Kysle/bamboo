@@ -396,7 +396,7 @@
 			$(div).css("overvlow-x", "auto");
 		}
 		
-		document.title = "Bamboo Temps: "+changeTo;
+		window.parent.document.title = "Bamboo Temps: "+changeTo;
 	}
 	
 	function graph(fid, fileDate, cols, rangeInDays) {
@@ -422,8 +422,7 @@
 	//			var sensor2 = [];
 				var timesMS = [];
 				timesS.forEach(function(time){
-//remove ME			timesMS.push(Math.floor(time/3600)*3600000);
-					timesMS.push(time*1000);
+					timesMS.push(Math.floor(time/3600)*3600000);
 				});
 				
 				var sensor1 = cols.sensor1.data; 
@@ -751,7 +750,7 @@
 		initCall(0);
 //		graph(1,"2017-02", 1);
 
-		document.title = "Bamboo Temps";
+		window.parent.document.title = "Bamboo Temps";
 
 		//TODO timer to refresh page/data at expected update	
 	}); //end document.ready

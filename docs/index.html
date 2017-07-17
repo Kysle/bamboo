@@ -107,7 +107,7 @@
 	height: auto;
 	clear:both;	
 }
-#noData {
+.noData {
 	font-weight: bold;
 	margin-bottom: 10%;	
 }
@@ -568,7 +568,7 @@
 	
 	function populatePlotlyLocations(filesByLocation) {
 		console.log(filesByLocation);
-		var locations = Object.keys(filesByLocation);
+		var locations = Object.keys(filesByLocation).sort();
 		var l = locations.length;
 		var div, files, j, l2;
 		var spacer = "<span class='spacer'></span";
